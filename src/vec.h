@@ -2,7 +2,7 @@
 #define LINEAR_VEC_H
 #include <cmath>
 #include <algorithm>
-#include "mat.h"//meow meow meow meow
+#include "mat.h"
 
 namespace lnr {
     template <std::size_t N_>
