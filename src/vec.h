@@ -56,6 +56,11 @@ namespace lnr {
         return acosf((a.t() * b)(0, 0) / (a.mag() * b.mag()));
     }
 
+    template <std::size_t N>
+    float dot(const vec<N> &a, const vec<N> &b) {
+        return (a.t() * b)(0, 0);
+    }
+
     inline vec<3> cross(const vec<3> &a, const vec<3> &b) {
         return {
             a[1] * b[2] - a[2] * b[1],
