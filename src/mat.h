@@ -7,54 +7,52 @@
 
 namespace lnr {
 
-    template <size_t M_, size_t N_ = M_>
+    template <size_t M, size_t N = M>
     class mat {
         float* m_Values;
         size_t* m_MIdx;
         size_t* m_NIdx;
     public:
-        static constexpr size_t M = M_;
-        static constexpr size_t N = N_;
 
         inline static const mat ZERO = mat(0.f);
 
         void initIndexer() const {
-            for (std::size_t m = 0; m < M_; ++m) m_MIdx[m] = m;
-            for (std::size_t n = 0; n < N_; ++n) m_NIdx[n] = n;
+            for (std::size_t m = 0; m < M; ++m) m_MIdx[m] = m;
+            for (std::size_t n = 0; n < N; ++n) m_NIdx[n] = n;
         }
 
         explicit mat(float value = 0.f) {
-            m_Values = new float[M_ * N_]{value};
-            m_MIdx = new size_t[M_];
-            m_NIdx = new size_t[N_];
+            m_Values = new float[M * N]{value};
+            m_MIdx = new size_t[M];
+            m_NIdx = new size_t[N];
             initIndexer();
         }
 
         explicit mat(const float (&values)[M * N]) {
-            m_Values = new float[M_ * N_];
+            m_Values = new float[M * N];
             std::copy(std::begin(values), std::end(values) + M * N, m_Values);
-            m_MIdx = new size_t[M_];
-            m_NIdx = new size_t[N_];
+            m_MIdx = new size_t[M];
+            m_NIdx = new size_t[N];
             initIndexer();
         }
 
         template<typename ...Args>
         constexpr mat(Args... values) {
             static_assert(sizeof...(Args) == M * N, "Size mismatch");
-            m_Values = new float[M_ * N_];
+            m_Values = new float[M * N];
             std::size_t i = 0;
             ((m_Values[i++] = values), ...);
-            m_MIdx = new size_t[M_];
-            m_NIdx = new size_t[N_];
+            m_MIdx = new size_t[M];
+            m_NIdx = new size_t[N];
             initIndexer();
         }
 
         mat(const mat &m) {
-            m_Values = new float[M_ * N_];
+            m_Values = new float[M * N];
             std::copy(m.m_Values, m.m_Values + N * M, m_Values);
-            m_MIdx = new size_t[M_];
+            m_MIdx = new size_t[M];
             std::copy(m.m_MIdx, m.m_MIdx + M, m_MIdx);
-            m_NIdx = new size_t[N_];
+            m_NIdx = new size_t[N];
             std::copy(m.m_NIdx, m.m_NIdx + N, m_NIdx);
         }
 
@@ -75,8 +73,8 @@ namespace lnr {
 
         bool operator==(const mat &other) const {
             if (this == &other) return true;
-            for (size_t m = 0; m < M_; ++m)
-                for (size_t n = 0; n < N_; ++n)
+            for (size_t m = 0; m < M; ++m)
+                for (size_t n = 0; n < N; ++n)
                     if (operator()(m, n) != other(m, n)) return false;
             return true;
         }
