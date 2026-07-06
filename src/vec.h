@@ -5,12 +5,10 @@
 #include "mat.h"
 
 namespace lnr {
-    template <std::size_t N_>
-    class vec : public mat<N_, 1> {
+    template <std::size_t N>
+    class vec : public mat<N, 1> {
 
     public:
-        static constexpr std::size_t N = N_;
-
         vec() : mat<N, 1>() {}
 
         vec(const float (&values)[N]) : mat<N, 1>(values) {}
