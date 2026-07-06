@@ -10,20 +10,32 @@ namespace lnr {
     template <size_t M_, size_t N_ = M_>
     class mat {
         float* m_Values;
-
+        size_t* m_MIdx;
+        size_t* m_NIdx;
     public:
         static constexpr size_t M = M_;
         static constexpr size_t N = N_;
 
-        inline static const mat ZERO = {};
+        inline static const mat ZERO = mat(0.f);
+
+        void initIndexer() const {
+            for (std::size_t m = 0; m < M_; ++m) m_MIdx[m] = m;
+            for (std::size_t n = 0; n < N_; ++n) m_NIdx[n] = n;
+        }
 
         explicit mat(float value = 0.f) {
             m_Values = new float[M_ * N_]{value};
+            m_MIdx = new size_t[M_];
+            m_NIdx = new size_t[N_];
+            initIndexer();
         }
 
         explicit mat(const float (&values)[M * N]) {
             m_Values = new float[M_ * N_];
             std::copy(std::begin(values), std::end(values) + M * N, m_Values);
+            m_MIdx = new size_t[M_];
+            m_NIdx = new size_t[N_];
+            initIndexer();
         }
 
         template<typename ...Args>
@@ -32,40 +44,59 @@ namespace lnr {
             m_Values = new float[M_ * N_];
             std::size_t i = 0;
             ((m_Values[i++] = values), ...);
+            m_MIdx = new size_t[M_];
+            m_NIdx = new size_t[N_];
+            initIndexer();
         }
 
         mat(const mat &m) {
             m_Values = new float[M_ * N_];
             std::copy(m.m_Values, m.m_Values + N * M, m_Values);
+            m_MIdx = new size_t[M_];
+            std::copy(m.m_MIdx, m.m_MIdx + M, m_MIdx);
+            m_NIdx = new size_t[N_];
+            std::copy(m.m_NIdx, m.m_NIdx + N, m_NIdx);
         }
 
         mat(mat &&m) noexcept {
             m_Values = m.m_Values;
             m.m_Values = nullptr;
+            m_MIdx = m.m_MIdx;
+            m.m_MIdx = nullptr;
+            m_NIdx = m.m_NIdx;
+            m.m_NIdx = nullptr;
         }
 
         virtual ~mat() {
             delete[] m_Values;
+            delete[] m_MIdx;
+            delete[] m_NIdx;
         }
 
-        bool operator==(const mat &m) const {
-            return this == &m || std::equal(m_Values, m_Values + M * N, m.m_Values);
+        bool operator==(const mat &other) const {
+            if (this == &other) return true;
+            for (size_t m = 0; m < M_; ++m)
+                for (size_t n = 0; n < N_; ++n)
+                    if (operator()(m, n) != other(m, n)) return false;
+            return true;
         }
 
-        bool operator!=(const mat &m) const {
-            return !(*this == m);
+        bool operator!=(const mat &other) const {
+            return !(*this == other);
         }
 
-        mat& operator=(const mat &m) {
-            if (this == &m) return *this;
-            std::copy(m.m_Values, m.m_Values + N * M, m_Values);
+        mat& operator=(const mat &other) {
+            if (this == &other) return *this;
+            std::copy(other.m_Values, other.m_Values + N * M, m_Values);
+            std::copy(other.m_MIdx, other.m_MIdx + M, m_MIdx);
+            std::copy(other.m_NIdx, other.m_NIdx + N, m_NIdx);
             return *this;
         }
 
-        mat& operator=(mat &&m) noexcept {
-            if (this == &m) return *this;
-            m_Values = m.m_Values;
-            m.m_Values = nullptr;
+        mat& operator=(mat &&other) noexcept {
+            if (this == &other) return *this;
+            m_Values = other.m_Values;
+            other.m_Values = nullptr;
             return *this;
         }
 
@@ -73,15 +104,15 @@ namespace lnr {
             return *this * -1;
         }
 
-        mat& operator+=(const mat &m) {
+        mat& operator+=(const mat &other) {
             for (std::size_t i = 0; i < M * N; ++i)
-                m_Values[i] += m.m_Values[i];
+                m_Values[i] += other.m_Values[i];
             return *this;
         }
 
-        mat& operator-=(const mat &m) {
+        mat& operator-=(const mat &other) {
             for (std::size_t i = 0; i < M * N; ++i)
-                m_Values[i] -= m.m_Values[i];
+                m_Values[i] -= other.m_Values[i];
             return *this;
         }
 
@@ -97,12 +128,12 @@ namespace lnr {
             return *this;
         }
 
-        mat operator+(const mat &m) const {
-            return mat(*this) += m;
+        mat operator+(const mat &other) const {
+            return mat(*this) += other;
         }
 
-        mat operator-(const mat &m) const {
-            return mat(*this) -= m;
+        mat operator-(const mat &other) const {
+            return mat(*this) -= other;
         }
 
         mat operator*(const float f) const {
@@ -127,36 +158,54 @@ namespace lnr {
         }
 
         float operator()(const size_t m, const size_t n) const {
-            return m_Values[m * N + n];
+            return m_Values[m_MIdx[m] * N + m_NIdx[n]];
         }
 
         float& operator()(const size_t m, const size_t n) {
-            return m_Values[m * N + n];
+            return m_Values[m_MIdx[m] * N + m_NIdx[n]];
         }
 
 
 #if __cplusplus >= 202302L
         float operator[](const size_t m, const size_t n) const {
-            return m_Values[m * N + n];
+            return operator()(other, n);
         }
 
         float& operator[](const size_t m, const size_t n) {
-            return m_Values[m * N + n];
-        }
+            return operator()(other, n);
 #endif
+
+        mat& swapM(const size_t m0, const size_t m) {
+            if (m0 == m) return *this;
+            std::swap(m_MIdx[m0], m_MIdx[m]);
+            return *this;
+        }
+
+        mat& swapN(const size_t n0, const size_t n) {
+            if (n0 == n) return *this;
+            std::swap(m_NIdx[n0], m_NIdx[n]);
+            return *this;
+        }
 
         [[nodiscard]] float det() const {
             static_assert(M == N, "Matrix is not square");
-            mat temp = *this;
+            mat plu = *this;
             float ret = 1;
-            for (size_t i = 0; i < M; ++i) {
-                float v0 = temp(i, i);
-                if (v0 == 0) return 0;
-                ret *= v0;
-                for (size_t m = i + 1; m < M; ++m) {
-                    float f = temp(m, i) / v0;
-                    for (size_t n = i; n < N; ++n) {
-                        temp(m, n) -= f * temp(i, n);
+            for (size_t p = 0; p < M; ++p) {
+                auto p_ = p;
+                while (p_ < M && plu(p_, p) == 0) ++p_;
+                if (p_ == M) return 0;
+                if (p_ != p) {
+                    plu.swapM(p_, p);
+                    ret = -ret;
+                }
+                auto pivot = plu(p, p);
+                ret *= pivot;
+                for (size_t m = p + 1; m < M; ++m) {
+                    auto f = plu(m, p) / pivot;
+                    plu(m, p) = f;
+                    for (size_t n = p + 1; n < N; ++n) {
+                        plu(m, n) -= f * plu(p, n);
                     }
                 }
             }

@@ -70,13 +70,28 @@ TEST(MatTest, Interpolation) {
     EXPECT_EQ(lerp(m1, m2, 0.5), mat<2>(0, 3, 1, 0));
 }
 
+TEST(MatTest, RowSwap) {
+    mat<2, 3>
+    m{
+        1, 2, 3,
+        4, 5, 6
+    },
+    result {
+        6, 5, 4,
+        3, 2, 1
+    };
+    m.swapM(0, 1);
+    m.swapN(0, 2);
+    EXPECT_EQ(m, result);
+}
+
 TEST(MatTest, Determinant) {
     mat<4> m{
         1, 3, 4, 0,
-        -2, -5, 10, 2,
+        -2, -6, 10, 2,
         -1, -2, 2, 3,
         -1, -2, -3, 1
     };
 
-    EXPECT_FLOAT_EQ(m.det(), 29);
+    EXPECT_FLOAT_EQ(m.det(), 26);
 }
