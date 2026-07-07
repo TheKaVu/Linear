@@ -2,8 +2,6 @@
 #define LINEAR_MAT_H
 #include <cmath>
 #include <algorithm>
-#include "kernel/mat_mul.hpp"
-#include "kernel/mat_det.hpp"
 
 namespace lnr {
 

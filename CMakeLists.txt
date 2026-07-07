@@ -8,27 +8,23 @@ find_program(GLSL_VALIDATOR glslangValidator REQUIRED)
 
 # 2. Definiujemy LISTĘ wszystkich naszych shaderów
 set(COMPUTE_SHADERS
-        "src/kernel/mat_mul.comp"
-        "src/kernel/mat_det.comp"
+        "src/kernel/matScl.comp"
+        "src/kernel/matSum.comp"
+        "src/kernel/matMul.comp"
+        "src/kernel/matDet.comp"
 )
 
-# Pusta lista, do której będziemy dorzucać wygenerowane nagłówki
 set(GENERATED_HEADERS "")
 
-# 3. Pętla kompilująca każdy shader z listy
 foreach(SHADER_PATH IN LISTS COMPUTE_SHADERS)
 
-    # Wyciągamy samą nazwę pliku bez rozszerzenia (np. "matMul")
     get_filename_component(SHADER_NAME ${SHADER_PATH} NAME_WE)
 
-    # Generujemy ścieżkę do pliku wyjściowego (np. "build/matMul.hpp")
     set(SHADER_HDR "${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/${SHADER_NAME}.hpp")
 
-    # Tworzymy unikalną nazwę zmiennej C++ (zmieniamy na wielkie litery)
     string(TOUPPER ${SHADER_NAME} SHADER_VAR_NAME)
     set(CPP_ARRAY_NAME "VULKAN_KERNEL_${SHADER_VAR_NAME}")
 
-    # Dodajemy polecenie kompilacji dla TEGO KONKRETNEGO shadera
     add_custom_command(
             OUTPUT ${SHADER_HDR}
             COMMAND ${GLSL_VALIDATOR} -V ${CMAKE_CURRENT_SOURCE_DIR}/${SHADER_PATH} --vn ${CPP_ARRAY_NAME} -o ${SHADER_HDR}
@@ -36,12 +32,10 @@ foreach(SHADER_PATH IN LISTS COMPUTE_SHADERS)
             COMMENT "Kompilowanie ${SHADER_NAME}.comp do ${SHADER_NAME}.hpp (Tablica: ${CPP_ARRAY_NAME})..."
     )
 
-    # Dorzucamy wygenerowany plik do naszej listy nagłówków
     list(APPEND GENERATED_HEADERS ${SHADER_HDR})
 
 endforeach()
 
-# 4. Tworzymy bibliotekę, dodając jako zależność CAŁĄ LISTĘ wygenerowanych nagłówków
 add_library(VulkanKernel SHARED
         src/vulkanKernel.cpp # <--- POPRAWKA: Dodano folder src/ (upewnij się, że plik tam leży!)
         ${GENERATED_HEADERS}
