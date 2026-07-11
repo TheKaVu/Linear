@@ -45,7 +45,7 @@ namespace lnr {
         }
 
         /// Creates new matrix with given values in cells, row by row.
-        /// @param values Values to pot in cells.
+        /// @param values Values to put in cells.
         template<typename ...Args>
         constexpr mat(Args... values) {
             static_assert(sizeof...(Args) == M * N, "Size mismatch");
