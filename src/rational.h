@@ -5,6 +5,7 @@
 #include <numeric>
 
 namespace lnr {
+    /// Represents a rational number;
     class rational {
         bool m_Sgn;
         unsigned long m_P;
@@ -17,6 +18,10 @@ namespace lnr {
         }
 
     public:
+
+        /// Creates a rational number from a ratio of two given numbers.
+        /// @param p Nominator.
+        /// @param q Denominator.
         rational(const long p = 0, const long q = 1) {
             if (q == 0) throw std::invalid_argument("q must be different than zero");
             m_P = std::abs(p);
@@ -25,12 +30,20 @@ namespace lnr {
             simplify();
         }
 
-        rational(const rational& r) = default;
+        /// Creates a rational number by copying other one.
+        /// @param other Number to copy.
+        rational(const rational& other) = default;
 
-        rational(rational&& r) noexcept = default;
+        /// Creates a rational number by moving other one.
+        /// @param other Number to move.
+        rational(rational&& other) noexcept = default;
 
-        rational& operator=(const rational& r) = default;
+        /// Assigns a copy of a rational number to this one.
+        /// @param other Number to copy.
+        rational& operator=(const rational& other) = default;
 
+        /// Negates a value of this number.
+        /// @return Negate rational value.
         rational operator-()  const {
             rational ret = *this;
             ret.m_Sgn = !ret.m_Sgn;
