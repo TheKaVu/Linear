@@ -4,36 +4,48 @@
 #include <algorithm>
 
 namespace lnr {
-
+    /// Represents a M by N matrix.
+    /// @tparam M Number of rows (height).
+    /// @tparam N Number of columns (width).
     template <size_t M, size_t N = M>
     class mat {
         float* m_Values;
         size_t* m_MIdx;
         size_t* m_NIdx;
-    public:
 
-        inline static const mat ZERO = mat(0.f);
-
-        void initIndexer() const {
+        void initIdx() const {
             for (std::size_t m = 0; m < M; ++m) m_MIdx[m] = m;
             for (std::size_t n = 0; n < N; ++n) m_NIdx[n] = n;
         }
 
+        inline static const mat* m_Idt = nullptr;
+
+    public:
+
+        /// A matrix filled with zeros.
+        inline static const mat ZERO = mat(0.f);
+
+        /// Creates new matrix filled with given value.
+        /// @param value Value to fill every cell with.
         explicit mat(float value = 0.f) {
             m_Values = new float[M * N]{value};
             m_MIdx = new size_t[M];
             m_NIdx = new size_t[N];
-            initIndexer();
+            initIdx();
         }
 
+        /// Creates new matrix from a static array.
+        /// @param values Input array.
         explicit mat(const float (&values)[M * N]) {
             m_Values = new float[M * N];
             std::copy(std::begin(values), std::end(values) + M * N, m_Values);
             m_MIdx = new size_t[M];
             m_NIdx = new size_t[N];
-            initIndexer();
+            initIdx();
         }
 
+        /// Creates new matrix with given values in cells, row by row.
+        /// @param values Values to pot in cells.
         template<typename ...Args>
         constexpr mat(Args... values) {
             static_assert(sizeof...(Args) == M * N, "Size mismatch");
@@ -42,33 +54,41 @@ namespace lnr {
             ((m_Values[i++] = values), ...);
             m_MIdx = new size_t[M];
             m_NIdx = new size_t[N];
-            initIndexer();
+            initIdx();
         }
 
-        mat(const mat &m) {
+        /// Creates new matrix by copying other one.
+        /// @param other Matrix to copy.
+        mat(const mat &other) {
             m_Values = new float[M * N];
-            std::copy(m.m_Values, m.m_Values + N * M, m_Values);
+            std::copy(other.m_Values, other.m_Values + N * M, m_Values);
             m_MIdx = new size_t[M];
-            std::copy(m.m_MIdx, m.m_MIdx + M, m_MIdx);
+            std::copy(other.m_MIdx, other.m_MIdx + M, m_MIdx);
             m_NIdx = new size_t[N];
-            std::copy(m.m_NIdx, m.m_NIdx + N, m_NIdx);
+            std::copy(other.m_NIdx, other.m_NIdx + N, m_NIdx);
         }
 
-        mat(mat &&m) noexcept {
-            m_Values = m.m_Values;
-            m.m_Values = nullptr;
-            m_MIdx = m.m_MIdx;
-            m.m_MIdx = nullptr;
-            m_NIdx = m.m_NIdx;
-            m.m_NIdx = nullptr;
+        /// Creates new matrix by moving other one.
+        /// @param other Matrix ot move.
+        mat(mat &&other) noexcept {
+            m_Values = other.m_Values;
+            other.m_Values = nullptr;
+            m_MIdx = other.m_MIdx;
+            other.m_MIdx = nullptr;
+            m_NIdx = other.m_NIdx;
+            other.m_NIdx = nullptr;
         }
 
+        /// Destroys this matrix object.
         virtual ~mat() {
             delete[] m_Values;
             delete[] m_MIdx;
             delete[] m_NIdx;
         }
 
+        /// Checks equality to given matrix.
+        /// @param other Matrix to compare.
+        /// @return @c true if matrices are equal, @c false otherwise.
         bool operator==(const mat &other) const {
             if (this == &other) return true;
             for (size_t m = 0; m < M; ++m)
@@ -77,10 +97,16 @@ namespace lnr {
             return true;
         }
 
+        /// Checks inequality to given matrix.
+        /// @param other Matrix to compare.
+        /// @return @c true if matrices are not equal, @c false otherwise.
         bool operator!=(const mat &other) const {
             return !(*this == other);
         }
 
+        /// Copies given matrix to this one.
+        /// @param other Matrix to copy.
+        /// @return This matrix.
         mat& operator=(const mat &other) {
             if (this == &other) return *this;
             std::copy(other.m_Values, other.m_Values + N * M, m_Values);
@@ -89,6 +115,9 @@ namespace lnr {
             return *this;
         }
 
+        /// Moves given matrix to this one.
+        /// @param other Matrix to move.
+        /// @return This matrix.
         mat& operator=(mat &&other) noexcept {
             if (this == &other) return *this;
             m_Values = other.m_Values;
@@ -96,46 +125,72 @@ namespace lnr {
             return *this;
         }
 
+        /// Negates all cells of this matrix.
+        /// @return Matrix with negated values.
         mat operator-() const {
             return *this * -1;
         }
 
+        /// Adds a matrix to this one.
+        /// @param other Matrix to add.
+        /// @return This matrix.
         mat& operator+=(const mat &other) {
             for (std::size_t i = 0; i < M * N; ++i)
                 m_Values[i] += other.m_Values[i];
             return *this;
         }
 
+        /// Subtracts a matrix from this one.
+        /// @param other Matrix to subtract.
+        /// @return This matrix.
         mat& operator-=(const mat &other) {
             for (std::size_t i = 0; i < M * N; ++i)
                 m_Values[i] -= other.m_Values[i];
             return *this;
         }
 
+        /// Multiplies this matrix by scalar.
+        /// @param f Scalar.
+        /// @return This matrix.
         mat& operator*=(const float f) {
             for (std::size_t i = 0; i < M * N; ++i)
                 m_Values[i] *= f;
             return *this;
         }
 
+        /// Divides this matrix by scalar.
+        /// @param f Scalar.
+        /// @return This matrix.
         mat& operator/=(const float f) {
             for (std::size_t i = 0; i < M * N; ++i)
                 m_Values[i] /= f;
             return *this;
         }
 
+        /// Adds two matrices.
+        /// @param other Matrix to add.
+        /// @return Result of addition
         mat operator+(const mat &other) const {
             return mat(*this) += other;
         }
 
+        /// Subtracts two matrices.
+        /// @param other Matrix to subtract.
+        /// @return Result of subtraction.
         mat operator-(const mat &other) const {
             return mat(*this) -= other;
         }
 
+        /// Multiplies matrix by scalar.
+        /// @param f Scalar.
+        /// @return Scaled matrix.
         mat operator*(const float f) const {
             return mat(*this) *= f;
         }
 
+        /// Divides matrix by scalar.
+        /// @param f Scalar.
+        /// @return Scaled matrix.
         mat operator/(const float f) const {
             return mat(*this) /= f;
         }
@@ -153,36 +208,63 @@ namespace lnr {
             return ret;
         }
 
+        /// Gets the value of matrix cell.
+        /// @param m Row index.
+        /// @param n Column index.
+        /// @return Value of respective cell.
         float operator()(const size_t m, const size_t n) const {
             return m_Values[m_MIdx[m] * N + m_NIdx[n]];
         }
 
+        /// Accesses the value of matrix cell.
+        /// @param m Row index.
+        /// @param n Column index.
+        /// @return Reference to value of respective cell.
         float& operator()(const size_t m, const size_t n) {
             return m_Values[m_MIdx[m] * N + m_NIdx[n]];
         }
 
 
 #if __cplusplus >= 202302L
+        /// Gets the value of matrix cell.
+        /// @param m Row index.
+        /// @param n Column index.
+        /// @return Value of respective cell.
         float operator[](const size_t m, const size_t n) const {
             return operator()(other, n);
         }
 
+        /// Accesses the value of matrix cell.
+        /// @param m Row index.
+        /// @param n Column index.
+        /// @return Reference to value of respective cell.
         float& operator[](const size_t m, const size_t n) {
             return operator()(other, n);
+        }
 #endif
 
-        mat& swapM(const size_t m0, const size_t m) {
-            if (m0 == m) return *this;
-            std::swap(m_MIdx[m0], m_MIdx[m]);
+        /// Swaps two given rows of this matrix.
+        /// @param m1 First row.
+        /// @param m2 Second row.
+        /// @return This matrix.
+        mat& swapM(const size_t m1, const size_t m2) {
+            if (m1 == m2) return *this;
+            std::swap(m_MIdx[m1], m_MIdx[m2]);
             return *this;
         }
 
-        mat& swapN(const size_t n0, const size_t n) {
-            if (n0 == n) return *this;
-            std::swap(m_NIdx[n0], m_NIdx[n]);
+        /// Swaps two given columns of this matrix.
+        /// @param n1 First column.
+        /// @param n2 Second column.
+        /// @return This matrix.
+        mat& swapN(const size_t n1, const size_t n2) {
+            if (n1 == n2) return *this;
+            std::swap(m_NIdx[n1], m_NIdx[n2]);
             return *this;
         }
 
+        /// Calculates determinant of this matrix.
+        /// @return Determinant of this matrix.
         [[nodiscard]] float det() const {
             static_assert(M == N, "Matrix is not square");
             mat plu = *this;
@@ -208,6 +290,10 @@ namespace lnr {
             return ret;
         }
 
+        /// Creates a minor from this matrix after removal of given row and column.
+        /// @param m0 Row to remove.
+        /// @param n0 Column to remove.
+        /// @return Minor of this matrix.
         [[nodiscard]] mat<M - 1, N - 1> minor(const size_t m0, const size_t n0) const {
             mat<M - 1, N - 1> ret;
             for (size_t m = 0; m < M - 1; ++m) {
@@ -229,6 +315,8 @@ namespace lnr {
             return ret;
         }
 
+        /// Transposes this matrix.
+        /// @return Transposed matrix.
         [[nodiscard]] mat<N, M> t() const {
             mat<N, M> ret;
             for (size_t m = 0; m < M; ++m) {
@@ -239,14 +327,36 @@ namespace lnr {
             return ret;
         }
 
-        [[nodiscard]] mat clamp(float minVal, float maxVal) {
-            mat<M, N> ret;
+        /// Clamps value in each cell with given values.
+        /// @param minVal Minimum allowed value.
+        /// @param maxVal Maximum allowed value.
+        /// @return Clamped matrix.
+        [[nodiscard]] mat clamp(float minVal, float maxVal) const {
+            mat ret;
             for (size_t m = 0; m < M; ++m) {
-                ret = std::min(std::max(minVal, ret(m)), maxVal);
+                for (size_t n = 0; n < N; ++n) {
+                    ret(m, n) = std::min(std::max(minVal, ret(m, n)), maxVal);
+                }
             }
             return ret;
         }
 
+        /// Clamps value in each cell with given values.
+        /// @param min Minimum allowed value.
+        /// @param max Maximum allowed value.
+        /// @return Clamped matrix.
+        [[nodiscard]] mat clamp(mat min, mat max) const {
+            mat ret;
+            for (size_t m = 0; m < M; ++m) {
+                for (size_t n = 0; n < N; ++n) {
+                    ret(m, n) = std::min(std::max(min(m, n), ret(m, n)), max(m, n));
+                }
+            }
+            return ret;
+        }
+
+        /// Calculates a sum of this matrix diagonal.
+        /// @return Sum of diagonal.
         [[nodiscard]] float trace() const {
             static_assert(M == N, "Matrix is not square");
             float ret = 0;
@@ -256,23 +366,39 @@ namespace lnr {
             return ret;
         }
 
-        static mat idt() {
+        /// Creates identity matrix.
+        /// @return Identity matrix.
+        static const mat& idt() {
             static_assert(M == N, "Matrix is not square");
-            mat m;
+            if (m_Idt != nullptr) return &m_Idt;
+            m_Idt = new mat();
             for (std::size_t i = 0; i < M; ++i) {
-                m(i, i) = 1;
+                m_Idt(i, i) = 1;
             }
-            return m;
+            return m_Idt;
         }
     };
 
     // Global operators
 
+    /// Multiplies matrix by scalar.
+    /// @tparam M Number of rows (height).
+    /// @tparam N Number of columns (width).
+    /// @param f Scalar.
+    /// @param m Matrix to multiply.
+    /// @return Scaled matrix.
     template <std::size_t M, std::size_t N>
-    mat<M, N> operator * (float f, const mat<M, N> &v) {
-        return mat<M, N>(v) *= f;
+    mat<M, N> operator * (float f, const mat<M, N> &m) {
+        return mat<M, N>(m) *= f;
     }
 
+    /// Performs linear interpolation with given bounds.
+    /// @tparam M Number of rows (height).
+    /// @tparam N Number of columns (width).
+    /// @param min Lower bound matrix.
+    /// @param max Upper bound matrix.
+    /// @param f Factor.
+    /// @return Interpolated value.
     template <std::size_t M, std::size_t N>
     mat<M, N> lerp(const mat<M, N> &min, const mat<M, N> &max, float f) {
         return min * (1 - f) + max * f;
