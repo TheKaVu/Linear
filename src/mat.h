@@ -18,8 +18,6 @@ namespace lnr {
             for (std::size_t n = 0; n < N; ++n) m_NIdx[n] = n;
         }
 
-        inline static const mat* m_Idt = nullptr;
-
     public:
 
         /// A matrix filled with zeros.
@@ -368,14 +366,13 @@ namespace lnr {
 
         /// Creates identity matrix.
         /// @return Identity matrix.
-        static const mat& idt() {
+        static mat idt() {
             static_assert(M == N, "Matrix is not square");
-            if (m_Idt != nullptr) return &m_Idt;
-            m_Idt = new mat();
+            mat idtMat;
             for (std::size_t i = 0; i < M; ++i) {
-                m_Idt(i, i) = 1;
+                idtMat(i, i) = 1;
             }
-            return m_Idt;
+            return idtMat;
         }
     };
 
