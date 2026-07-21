@@ -1,4 +1,3 @@
-# Zmieniono z 4.2 na 3.20 (wersja 4.2 CMake nie jest standardem)
 cmake_minimum_required(VERSION 4.2)
 set(CMAKE_CXX_STANDARD 20)
 
